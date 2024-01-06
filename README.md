@@ -11,7 +11,7 @@ Since PyPI is temporarily not accepting new user registrations, you can install 
 1. Clone the GitHub repository:
 ```
 git@github.com:eramireztorres/voicegpt-chat.git
-cd pyvideocreator
+cd voicegpt-chat
 ```
 2. Install the package:
 ```
