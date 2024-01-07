@@ -22,12 +22,16 @@ This will install VoiceGPT-Chat along with its dependencies.
 
 ## Dependencies
 
-Apart from the Python packages installed by default, this project also depends on `edge-tts`. 
+Apart from the Python packages installed by default, this project also depends on `edge-tts` and  `google-generativeai`. 
 
-To install `edge-tts`, run the following command:
+To install these dependencies, run the following command:
 
 ```bash
 pip install edge-tts
+```
+
+```bash
+pip install google-generativeai
 ```
 
 ## Additional Dependency: FFmpeg

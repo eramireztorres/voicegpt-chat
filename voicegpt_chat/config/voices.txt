@@ -1,0 +1,15 @@
+es-US-AlonsoNeural
+alloy
+es-AR-ElenaNeural
+es-CU-BelkysNeural
+es-ES-AlvaroNeural
+echo
+fable
+onyx
+nova
+shimmer
+es-BO-MarceloNeural
+es-CL-LorenzoNeural
+es-EC-AndreaNeural
+es-CO-SalomeNeural
+es-GQ-JavierNeural
