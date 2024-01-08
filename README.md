@@ -10,7 +10,7 @@ Make sure you use python 3.11 or higher.
 Since PyPI is temporarily not accepting new user registrations, you can install VoiceGPT-chat directly from the source using the following steps:
 1. Clone the GitHub repository:
 ```
-git@github.com:eramireztorres/voicegpt-chat.git
+git clone git@github.com:eramireztorres/voicegpt-chat.git
 cd voicegpt-chat
 ```
 2. Install the package:
