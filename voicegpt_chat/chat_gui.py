@@ -277,8 +277,9 @@ class ChatGUI:
         self.speech_button = tk.Button(self.root, text="Start Speech", command=self.start_speech)
         self.speech_button.pack()
 
-        # Bind space bar to the speech button
-        self.root.bind('<space>', lambda event: self.start_speech())
+        # Bind key short-cut to the speech button
+        self.root.bind('<Control-p>', lambda event: self.start_speech())
+        # self.root.bind('<space>', lambda event: self.start_speech())
         
         self.load_button = tk.Button(self.root, text="Load Prompt", command=self.load_prompt)
         self.load_button.pack()
