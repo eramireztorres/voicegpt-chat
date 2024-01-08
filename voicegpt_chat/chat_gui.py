@@ -12,7 +12,8 @@ import pygame
 from voicegpt_chat.model_response_generator import ModelResponseGenerator
 from voicegpt_chat.edge_tts import EdgeTTS
 from voicegpt_chat.gpt_tts import OpenAITTS
-# And so on for other imports...
+import tkinter.simpledialog as simpledialog
+
 
 import tempfile
 
@@ -48,7 +49,9 @@ def read_kwargs_from_file(file_path):
     return kwargs
 
 def read_speech_languages():
-    return read_config_file('speech_language.txt')
+    resource_path = pkg_resources.resource_filename('voicegpt_chat', 'config/speech_language.txt')
+    with open(resource_path, 'r') as file:
+        return file.read().splitlines()
 
 
 class SpeechToText:
@@ -148,11 +151,9 @@ class ChatGUI:
 
     def read_default_speech_language(self):
         # Attempt to read the default speech language from file
-        dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        file_path = os.path.join(dir_path, 'config', "speech_language.txt")
-
-        
         try:
+            # Use pkg_resources to locate the file within the package
+            file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/speech_language.txt')
             with open(file_path, "r") as file:
                 languages = file.read().splitlines()
                 if languages:
@@ -161,6 +162,7 @@ class ChatGUI:
             print("speech_language.txt not found. Using default language 'es-US'.")
         
         return 'es-US'  # Default language if file is not found or empty
+    
 
 
     def create_menu(self):
@@ -177,11 +179,71 @@ class ChatGUI:
         self.options_menu.add_cascade(label="Gemini Settings", menu=self.gemini_menu)
 
         self.menu.add_cascade(label="Options", menu=self.options_menu)
- 
+        
+       # Models Menu
+        self.models_menu = tk.Menu(self.options_menu, tearoff=False)
+        self.models_menu.add_command(label="Add Model", command=self.add_model)
+        self.models_menu.add_command(label="Remove Model", command=self.remove_model)
+        self.models_menu.add_command(label="Edit Model", command=self.edit_model)
+        self.options_menu.add_cascade(label="Model Settings", menu=self.models_menu)
+
+    def add_model(self):
+        # Function to add a new model
+        new_model = simpledialog.askstring("Add Model", "Enter model name:")
+        if new_model:
+            models_file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/models.txt')
+            with open(models_file_path, 'a') as file:
+                file.write(f"{new_model}\n")
+            self.update_models_combobox()
+
+    def remove_model(self):
+        # Function to remove an existing model
+        model_to_remove = simpledialog.askstring("Remove Model", "Enter model name to remove:")
+        if model_to_remove:
+            models_file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/models.txt')
+            with open(models_file_path, 'r') as file:
+                models = file.readlines()
+            
+            models = [model.strip() for model in models if model.strip() != model_to_remove]
+            
+            with open(models_file_path, 'w') as file:
+                file.writelines([model + '\n' for model in models])
+            
+            self.update_models_combobox()
+
+
+    def edit_model(self):
+        # Function to edit an existing model
+        model_to_edit = simpledialog.askstring("Edit Model", "Enter model name to edit:")
+        if model_to_edit:
+            new_model_name = simpledialog.askstring("Edit Model", "Enter new model name:")
+            if new_model_name:
+                models_file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/models.txt')
+                with open(models_file_path, 'r') as file:
+                    models = file.readlines()
+                
+                models = [new_model_name + '\n' if model.strip() == model_to_edit else model for model in models]
+                
+                with open(models_file_path, 'w') as file:
+                    file.writelines(models)
+                
+                self.update_models_combobox()
+
+
+    def update_models_combobox(self):
+        # Update the models list and combobox
+        self.models = read_models_from_file()
+        self.model_selector['values'] = self.models
+
+        if self.models:
+            self.model_selector.set(self.models[0])
+        else:
+            self.model_selector.set('')
+
 
     def set_speech_language(self):
         # Read the available speech languages from file
-        self.speech_languages = read_speech_languages("speech_language.txt")
+        self.speech_languages = read_speech_languages()
 
         # Create a new top-level window
         speech_language_window = tk.Toplevel(self.root)
@@ -251,13 +313,14 @@ class ChatGUI:
         self.prompt_frame.pack(side=tk.LEFT, fill='both', expand=True)
     
         # Prompt Label and Text
-        self.prompt_label = tk.Label(self.prompt_frame, text="Prompt (press space bar):")
+        self.prompt_label = tk.Label(self.prompt_frame, text="Prompt (press Control+p to speak):")
         self.prompt_label.pack(side=tk.TOP, anchor='w')
         self.prompt_text = tk.Text(self.prompt_frame, height=10, width=50, wrap=tk.WORD)
         self.prompt_scroll = Scrollbar(self.prompt_frame, command=self.prompt_text.yview)
         self.prompt_text['yscrollcommand'] = self.prompt_scroll.set
         self.prompt_text.pack(side=tk.LEFT, fill='both', expand=True)
         self.prompt_scroll.pack(side=tk.RIGHT, fill='y')
+        self.prompt_text.bind('<Return>', self.on_enter_pressed)
     
         # Create a subframe for the response area
         self.response_frame = tk.Frame(self.text_editor_frame)
@@ -271,6 +334,14 @@ class ChatGUI:
         self.response_text['yscrollcommand'] = self.response_scroll.set
         self.response_text.pack(side=tk.LEFT, fill='both', expand=True)
         self.response_scroll.pack(side=tk.RIGHT, fill='y')
+ 
+
+    def on_enter_pressed(self, event=None):
+        # Prevents the default newline insertion on pressing Enter
+        if event:
+            event.widget.master.focus()  # To move focus out of the text widget
+            self.submit_prompt()
+            return 'break'  # This prevents the default behavior of the Enter key
 
 
     def create_buttons(self):
