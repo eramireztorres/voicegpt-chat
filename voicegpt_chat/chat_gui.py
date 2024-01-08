@@ -334,7 +334,20 @@ class ChatGUI:
         self.response_text['yscrollcommand'] = self.response_scroll.set
         self.response_text.pack(side=tk.LEFT, fill='both', expand=True)
         self.response_scroll.pack(side=tk.RIGHT, fill='y')
- 
+
+        # Create the Copy Response Button
+        self.copy_button = tk.Button(self.response_frame, text="Copy Response", command=self.copy_response_to_clipboard)
+        # Initially hide the button
+        self.copy_button.pack_forget()
+
+
+    def copy_response_to_clipboard(self):
+        # Function to copy response text to clipboard
+        response_text = self.response_text.get("1.0", tk.END).strip()
+        self.root.clipboard_clear()
+        self.root.clipboard_append(response_text)
+        messagebox.showinfo("Copied", "Response text copied to clipboard")
+
 
     def on_enter_pressed(self, event=None):
         # Prevents the default newline insertion on pressing Enter
@@ -435,6 +448,10 @@ class ChatGUI:
         self.response_text.insert(tk.END, "Processing...")
         self.response_text.tag_add("italic", "1.0", "end")
         self.response_text.tag_configure("italic", font=("TkDefaultFont", 10, "italic"))
+        
+        
+        # Hide the copy button when a new prompt is submitted
+        self.copy_button.pack_forget()
 
         # Start a new thread for getting the model's response
         threading.Thread(target=self.process_and_display_response, args=(prompt,)).start()
@@ -452,6 +469,10 @@ class ChatGUI:
         self.response_text.delete("1.0", tk.END)
         self.response_text.insert(tk.END, text)
         self.response_text.tag_remove("italic", "1.0", "end")
+        
+
+        # Show the copy button when the response is updated
+        self.copy_button.pack(side=tk.BOTTOM, pady=5)
  
 
     def play_response(self):
