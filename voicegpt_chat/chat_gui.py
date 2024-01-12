@@ -313,7 +313,7 @@ class ChatGUI:
         self.prompt_frame.pack(side=tk.LEFT, fill='both', expand=True)
     
         # Prompt Label and Text
-        self.prompt_label = tk.Label(self.prompt_frame, text="Prompt (press Control+p to speak):")
+        self.prompt_label = tk.Label(self.prompt_frame, text="Prompt (press Control+P to speak):")
         self.prompt_label.pack(side=tk.TOP, anchor='w')
         self.prompt_text = tk.Text(self.prompt_frame, height=10, width=50, wrap=tk.WORD)
         self.prompt_scroll = Scrollbar(self.prompt_frame, command=self.prompt_text.yview)
