@@ -88,7 +88,7 @@ Please ensure that PowerShell is properly installed and configured on your Windo
 ## Usage
 To use VoiceGPT-Chat, follow these steps:
 
-    Start the GUI:
+Start the GUI:
     
 ```bash 
 voicegpt-chat
