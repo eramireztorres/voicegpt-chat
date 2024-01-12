@@ -4,8 +4,6 @@ VoiceGPT-Chat is an interactive chat application that enables users to communica
 
 ## Installation
 
-VoiceGPT-Chat requires Python 3.6 or higher. To install VoiceGPT-Chat, follow these steps:
-
 Make sure you use python 3.11 or higher.
 Since PyPI is temporarily not accepting new user registrations, you can install VoiceGPT-chat directly from the source using the following steps:
 1. Clone the GitHub repository:
