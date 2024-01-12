@@ -34,6 +34,30 @@ pip install edge-tts
 pip install google-generativeai
 ```
 
+## Export the API keys of your models
+
+Before using, make sure to export your OpenAI API key as an environment variable. 
+Optionally, you can also export GEMINI_API_KEY if you want to use that model:
+
+Linux or macOS:
+
+```bash
+export OPENAI_API_KEY='your_api_key_here'
+```
+
+Or in windows:
+
+```bash
+set OPENAI_API_KEY=your_api_key_here
+```
+
+If you want to set the API key permanently for Windows and not just for the current section:
+
+```bash
+[System.Environment]::SetEnvironmentVariable('OPENAI_API_KEY', 'your_api_key_here', [System.EnvironmentVariableTarget]::Machine)
+```
+
+
 ## Additional Requirement for Windows Users: PowerShell
 
 VoiceGPT-Chat requires PowerShell to be installed on Windows systems for certain functionalities. Follow these steps to install and configure PowerShell:
@@ -72,13 +96,14 @@ voicegpt-chat
 
 1.  Select the desired voice and GPT model from the dropdown menus in the application.
 
-2.  Press the "Start Speech" button or the space bar to start recording your voice.
+2.  Press the "Start Speech" button or Ctrl+P to start recording your voice. 
 
 3.  Speak into the microphone and wait for the speech to be transcribed and processed.
 
 4.  The application will display and read out the GPT model's response.
 
 Remember to check your microphone and speaker settings to ensure they are correctly configured.
+You can also chat directly by typing the prompt.
 
 ## License
 
