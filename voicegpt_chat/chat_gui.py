@@ -6,9 +6,6 @@ import speech_recognition as sr
 import datetime
 import os
 import pygame
-# from model_response_generator import ModelResponseGenerator
-# from edge_tts import EdgeTTS
-# from gpt_tts import OpenAITTS
 from voicegpt_chat.model_response_generator import ModelResponseGenerator
 from voicegpt_chat.edge_tts import EdgeTTS
 from voicegpt_chat.gpt_tts import OpenAITTS
@@ -31,8 +28,19 @@ def read_config_file(filename):
 
 
 # Now use read_config_file instead of read_file_from_package
+# def read_models_from_file():
+#     return read_config_file('models.txt')
+
 def read_models_from_file():
-    return read_config_file('models.txt')
+    models_with_aliases = read_config_file('models.txt')
+    models_dict = {}
+    for model_line in models_with_aliases:
+        parts = model_line.split('/')
+        alias = parts[0].strip()
+        model = parts[1].strip() if len(parts) > 1 else alias
+        models_dict[alias] = model
+    return models_dict
+
 
 def read_voices_from_file():
     return read_config_file('voices.txt')
@@ -82,6 +90,7 @@ class ChatGUI:
         # Load voices and models from files using the new functions
         self.voices = read_voices_from_file()
         self.models = read_models_from_file()
+       
         self.speech_languages = read_speech_languages()
         
         # Initialize speech_language_selector with default value
@@ -109,6 +118,7 @@ class ChatGUI:
         self.model_selector = ttk.Combobox(self.combobox_frame, values=self.models)
         self.model_selector.grid(row=1, column=1, padx=5)
         self.model_selector.bind('<<ComboboxSelected>>', self.change_focus)
+        self.model_selector['values'] = list(self.models.keys())
 
         # Text Editor and Response
         self.create_text_editor()
@@ -122,11 +132,17 @@ class ChatGUI:
         self.temp_dir = tempfile.mkdtemp()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
-        # Set default selections if available
+        # # Set default selections if available
         if self.voices:
             self.voice_selector.set(self.voices[0])
+        # if self.models:
+        #     self.model_selector.set(self.models[0])
+        
         if self.models:
-            self.model_selector.set(self.models[0])
+            first_alias = next(iter(self.models))  # Get the first key (alias) from the dictionary
+            self.model_selector.set(first_alias)
+        else:
+            self.model_selector.set('')
      
         self.current_model = None
         self.model_response_generator = None
@@ -135,15 +151,14 @@ class ChatGUI:
         # Initialize speech-to-text with the default language
         default_speech_language = self.read_default_speech_language()
         self.speech_to_text = SpeechToText(language=default_speech_language)        
-        
-        # # Initialize speech_language_selector with default value
-        # self.speech_languages = read_file_from_package('config/speech_language.txt')
-        # self.speech_language_selector = tk.StringVar(value=self.speech_languages[0] if self.speech_languages else 'es-US')
-
-
 
     def initialize_model_response_generator(self):
-        selected_model = self.model_selector.get() or 'gpt-4'
+        
+        selected_alias = self.model_selector.get()
+        selected_model = self.models.get(selected_alias, 'gpt-3.5-turbo')     
+        
+        print(f'Selected model: {selected_model}')   
+        
         model_kwargs = self.get_model_kwargs(selected_model)
         self.model_response_generator = ModelResponseGenerator(model=selected_model, model_kwargs=model_kwargs)
         self.current_model = selected_model
@@ -184,62 +199,62 @@ class ChatGUI:
         self.models_menu = tk.Menu(self.options_menu, tearoff=False)
         self.models_menu.add_command(label="Add Model", command=self.add_model)
         self.models_menu.add_command(label="Remove Model", command=self.remove_model)
-        self.models_menu.add_command(label="Edit Model", command=self.edit_model)
         self.options_menu.add_cascade(label="Model Settings", menu=self.models_menu)
 
     def add_model(self):
         # Function to add a new model
-        new_model = simpledialog.askstring("Add Model", "Enter model name:")
+        new_model = simpledialog.askstring("Add Model", "Enter alias/model (e.g. GPT3/gpt-3.5-turbo):")
         if new_model:
             models_file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/models.txt')
             with open(models_file_path, 'a') as file:
                 file.write(f"{new_model}\n")
             self.update_models_combobox()
 
+    # def remove_model(self):
+    #     # Simply show a message instead of opening a window
+    #     messagebox.showinfo("Remove Model", "This feature is currently unavailable.")
+    
     def remove_model(self):
-        # Function to remove an existing model
-        model_to_remove = simpledialog.askstring("Remove Model", "Enter model name to remove:")
-        if model_to_remove:
-            models_file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/models.txt')
-            with open(models_file_path, 'r') as file:
-                models = file.readlines()
-            
-            models = [model.strip() for model in models if model.strip() != model_to_remove]
-            
-            with open(models_file_path, 'w') as file:
-                file.writelines([model + '\n' for model in models])
-            
+        # Create a new top-level window for model removal
+        remove_model_window = tk.Toplevel(self.root)
+        remove_model_window.title("Remove Model")
+    
+        # Dropdown for model selection
+        self.model_to_remove_selector = ttk.Combobox(remove_model_window, values=list(self.models.keys()))
+        self.model_to_remove_selector.pack(padx=10, pady=10)
+        if self.models:
+            self.model_to_remove_selector.set(list(self.models.keys())[0])
+    
+        # Remove button
+        remove_button = tk.Button(remove_model_window, text="Remove", command=lambda: self.confirm_remove_model(remove_model_window))
+        remove_button.pack(pady=(0, 10))
+
+
+    def confirm_remove_model(self, window):
+        selected_model = self.model_to_remove_selector.get()
+        if messagebox.askyesno("Confirm", f"Are you sure you want to remove the model '{selected_model}'?"):
+            self.actual_remove_model(selected_model)
+            window.destroy()
             self.update_models_combobox()
 
 
-    def edit_model(self):
-        # Function to edit an existing model
-        model_to_edit = simpledialog.askstring("Edit Model", "Enter model name to edit:")
-        if model_to_edit:
-            new_model_name = simpledialog.askstring("Edit Model", "Enter new model name:")
-            if new_model_name:
-                models_file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/models.txt')
-                with open(models_file_path, 'r') as file:
-                    models = file.readlines()
-                
-                models = [new_model_name + '\n' if model.strip() == model_to_edit else model for model in models]
-                
-                with open(models_file_path, 'w') as file:
-                    file.writelines(models)
-                
-                self.update_models_combobox()
+    def actual_remove_model(self, model_alias):
+        models_file_path = pkg_resources.resource_filename('voicegpt_chat', 'config/models.txt')
+        with open(models_file_path, 'r') as file:
+            models = file.readlines()
+        models = [model for model in models if not model.startswith(model_alias)]
+        with open(models_file_path, 'w') as file:
+            file.writelines(models)
 
 
     def update_models_combobox(self):
-        # Update the models list and combobox
         self.models = read_models_from_file()
-        self.model_selector['values'] = self.models
+        self.model_selector['values'] = list(self.models.keys())
 
         if self.models:
-            self.model_selector.set(self.models[0])
+            self.model_selector.set(list(self.models.keys())[0])
         else:
             self.model_selector.set('')
-
 
     def set_speech_language(self):
         # Read the available speech languages from file
@@ -299,9 +314,6 @@ class ChatGUI:
         window.destroy()
         messagebox.showinfo("Success", "Gemini project ID updated successfully.")
 
-
-    # def set_api_key(self):
-    #     messagebox.showinfo("Set API Key", "Please enter your OpenAI API Key.")
 
     def create_text_editor(self):
         # Text Editor Frame
@@ -451,7 +463,8 @@ class ChatGUI:
         
         
         # Hide the copy button when a new prompt is submitted
-        self.copy_button.pack_forget()
+        self.copy_button.pack_forget()       
+       
 
         # Start a new thread for getting the model's response
         threading.Thread(target=self.process_and_display_response, args=(prompt,)).start()
@@ -534,5 +547,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
