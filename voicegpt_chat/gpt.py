@@ -1,7 +1,7 @@
 import openai
 
 class Gpt4AnswerGenerator:
-    def __init__(self, openai_api_key, model='gpt-4'):
+    def __init__(self, openai_api_key, model='gpt-4o'):
         self.client = openai.OpenAI(api_key=openai_api_key)
         self.model = model
         self.conversation_history = []
