@@ -35,9 +35,21 @@ def read_models_from_file():
     models_with_aliases = read_config_file('models.txt')
     models_dict = {}
     for model_line in models_with_aliases:
-        parts = model_line.split('/')
+        line = model_line.strip()
+        if not line or line.startswith('#'):
+            continue
+
+        parts = line.split('/')
         alias = parts[0].strip()
+        if not alias:
+            print(f"Ignoring model entry with empty alias: {model_line!r}")
+            continue
+
         model = parts[1].strip() if len(parts) > 1 else alias
+        if not model:
+            print(f"Ignoring model entry with empty model: {model_line!r}")
+            continue
+
         models_dict[alias] = model
     return models_dict
 
@@ -45,15 +57,36 @@ def read_models_from_file():
 def read_voices_from_file():
     return read_config_file('voices.txt')
 
-def read_kwargs_from_file(file_path):
-    kwargs = None
+def read_kwargs_from_file(filename):
+    """Read keyword arguments from a configuration file.
+
+    The function expects files to live in the package's ``config`` directory. Each
+    non-empty line should follow the ``key=value`` format. Invalid lines are
+    ignored instead of causing the application to crash, providing a more robust
+    experience when users manually edit the configuration files.
+    """
+
+    resource_path = pkg_resources.resource_filename('voicegpt_chat', f'config/{filename}')
+    kwargs = {}
+
     try:
-        with open(file_path, 'r') as file:
-            for line in file:
-                key, value = line.strip().split('=')
-                kwargs[key] = value
-    except:
-        print("Using default model kwargs")
+        with open(resource_path, 'r', encoding='utf-8') as file:
+            for raw_line in file:
+                line = raw_line.strip()
+                if not line or line.startswith('#'):
+                    continue
+
+                if '=' not in line:
+                    print(f"Ignoring invalid config entry in {filename}: {raw_line.rstrip()}")
+                    continue
+
+                key, value = line.split('=', 1)
+                kwargs[key.strip()] = value.strip()
+    except FileNotFoundError:
+        print(f"Configuration file {filename} not found. Using default model kwargs.")
+    except OSError as exc:
+        print(f"Error reading {filename}: {exc}. Using default model kwargs.")
+
     return kwargs
 
 def read_speech_languages():
